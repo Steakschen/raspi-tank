@@ -1,18 +1,17 @@
 /**
- * Module dependencies.
- */
+* Module dependencies.
+*/
 
 var express = require('express'),
     routes = require('./routes'),
     sio = require('socket.io'),
-    gpio = require('pi-gpio'),
     crypto = require('crypto'),
     async = require('async'),
     tank = {},
-    _leftMotorFront  = 11,
-    _leftMotorBack   = 12,
+    _leftMotorFront = 11,
+    _leftMotorBack = 12,
     _rightMotorFront = 15,
-    _rightMotorBack  = 16,
+    _rightMotorBack = 16,
     app = module.exports = express.createServer(),
     io = sio.listen(app);
 
@@ -40,44 +39,51 @@ app.get('/', routes.index);
 app.listen(3000);
 console.log('Listening %d in %s mode', app.address().port, app.settings.env);
 
-tank.initPins = function(){
-  async.parallel([
-    gpio.open(_leftMotorFront),
-    gpio.open(_leftMotorBack),
-    gpio.open(_rightMotorFront),
-    gpio.open(_rightMotorBack)
-  ]);
+tank.initPins = function()
+{
+    
 };
 
-tank.moveForward = function(){
-  async.parallel([
-    gpio.write(_leftMotorFront, 1),
-    gpio.write(_rightMotorFront, 1)
-  ]);
+tank.moveForward = function()
+{
+    var exec = require('child_process').exec;
+    var child = exec('echo "s7 1000 0" > /dev/ttyAMA0');
+};
+tank.moveBackward = function()
+{
+    var exec = require('child_process').exec;
+    var child = exec('echo "s7 -1000 0" > /dev/ttyAMA0');
+};
+tank.turnLeft = function()
+{
+    var exec = require('child_process').exec;
+    var child = exec('echo "s6 -1000 0" > /dev/ttyAMA0');
+};
+tank.turnRight = function()
+{
+    var exec = require('child_process').exec;
+    var child = exec('echo "s6 1000 0" > /dev/ttyAMA0');
 };
 
-tank.moveBackward = function(){
-  async.parallel([
-    gpio.write(_leftMotorBack, 1),
-    gpio.write(_rightMotorBack, 1)
-  ]);
+tank.stopForward = function()
+{
+    var exec = require('child_process').exec;
+    var child = exec('echo "s7 -400 0" > /dev/ttyAMA0');
 };
-
-tank.turnLeft = function(){
-  gpio.write(_rightMotorFront, 1);
+tank.stopBackward = function()
+{
+    var exec = require('child_process').exec;
+    var child = exec('echo "s7 -400 0" > /dev/ttyAMA0');
 };
-
-tank.turnRight = function(){
-  gpio.write(_leftMotorFront, 1);
+tank.stopLeft = function()
+{
+    var exec = require('child_process').exec;
+    var child = exec('echo "s6 200 0" > /dev/ttyAMA0');
 };
-
-tank.stopAllMotors = function(){
-  async.parallel([
-    gpio.write(_leftMotorFront, 0),
-    gpio.write(_leftMotorBack, 0),
-    gpio.write(_rightMotorFront, 0),
-    gpio.write(_rightMotorBack, 0)
-  ]);
+tank.stopRight = function()
+{
+    var exec = require('child_process').exec;
+    var child = exec('echo "s6 200 0" > /dev/ttyAMA0');
 };
 
 io.sockets.on('connection', function(socket) {
@@ -100,7 +106,20 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('keyup', function(dir){
-    tank.stopAllMotors();
+    switch(dir){
+     case 'up':
+        tank.stopForward();
+        break;
+      case 'down':
+        tank.stopBackward();
+        break;
+      case 'left':
+        tank.stopLeft();
+        break;
+      case 'right':
+        tank.stopRight();
+        break;
+    }
   });
 
 });
